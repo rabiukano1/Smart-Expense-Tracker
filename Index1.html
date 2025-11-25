@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense Tracker - Manage Your Finances</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Track income and expenses with beautiful charts. Simple, powerful financial management.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Expense Tracker">
+    <meta name="application-name" content="Expense Tracker">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#667eea">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/icons/icon-192x192.png" as="image">
+    <link rel="preload" href="/icons/icon-512x512.png" as="image">
+    
+    <!-- Original CSS -->
+    <style>
+        /* Your existing CSS styles here */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --danger-color: #f56565;
+            --warning-color: #ed8936;
+            --dark-color: #2d3748;
+            --light-color: #f7fafc;
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-color);
+        }
+
+        /* Add safe area insets for mobile devices */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-top: max(20px, env(safe-area-inset-top));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* PWA Install Prompt Styles */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .install-prompt.show {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .install-prompt button {
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .install-prompt button:hover {
+            background: var(--secondary-color);
+        }
+
+        .install-prompt .dismiss {
+            background: transparent;
+            color: var(--dark-color);
+            margin-left: 10px;
+        }
+
+        /* All your existing styles... */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* ... rest of your existing CSS ... */
+    </style>
+</head>
+<body>
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <div>
+            <strong>Install Smart Expense Tracker</strong><br>
+            <small>Add to home screen for quick access</small>
+        </div>
+        <div>
+            <button id="installBtn">Install</button>
+            <button id="dismissBtn" class="dismiss">Not now</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>💰 Smart Expense Tracker</h1>
+            <p>Easily manage your finances and track every income and expense</p>
+        </header>
+
+        <!-- Your existing HTML content -->
+        <div class="dashboard">
+            <div class="card balance-card">
+                <h2>Current Balance</h2>
+                <div class="balance-amount" id="totalBalance">$0.00</div>
+                <div class="balance-details">
+                    <div class="balance-item">
+                        <div class="label">Monthly Income</div>
+                        <div class="value income-value" id="totalIncome">$0.00</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="label">Monthly Expenses</div>
+                        <div class="value expense-value" id="totalExpense">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Quick Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="transactionCount">0</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avgTransaction">$0</div>
+                        <div class="stat-label">Average Amount</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="largestExpense">$0</div>
+                        <div class="stat-label">Largest Expense</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rest of your existing HTML content... -->
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // PWA Installation Logic
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const dismissBtn = document.getElementById('dismissBtn');
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            setTimeout(() => {
+                installPrompt.classList.add('show');
+            }, 3000);
+        });
+
+        // Install button click
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installPrompt.classList.remove('show');
+            }
+        });
+
+        // Dismiss button click
+        dismissBtn.addEventListener('click', () => {
+            installPrompt.classList.remove('show');
+        });
+
+        // Hide install prompt if app is already installed
+        window.addEventListener('appinstalled', () => {
+            installPrompt.classList.remove('show');
+            console.log('PWA was installed');
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New content is available
+                                    if (confirm('New version available! Reload to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Your existing JavaScript code
+        class ExpenseTracker {
+            constructor() {
+                this.transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+                this.currentFilter = 'all';
+                this.currentType = 'expense';
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setDefaultDate();
+                this.updateCategories();
+                this.updateUI();
+                this.drawPieChart();
+                this.handleDeepLinks();
+            }
+
+            handleDeepLinks() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const action = urlParams.get('action');
+                
+                if (action === 'add') {
+                    setTimeout(() => {
+                        document.getElementById('description').focus();
+                    }, 500);
+                } else if (action === 'dashboard') {
+                    setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 500);
+                }
+            }
+
+            // ... rest of your existing JavaScript code ...
+        }
+
+        // Initialize application
+        const tracker = new ExpenseTracker();
+
+        // Add online/offline detection
+        window.addEventListener('online', () => {
+            tracker.showToast('Back online! 🌐', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            tracker.showToast('You are offline. Some features may be limited. 📴', 'error');
+        });
+    </script>
+</body>
+</html>
